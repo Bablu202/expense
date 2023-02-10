@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
-import { Alert } from "./Components/Alert";
-import { ExpenseForm } from "./Components/ExpenseForm";
-import { ExpenseList } from "./Components/ExpenseList";
+import { Alert } from "./Components/things/Alert";
+import { ExpenseForm } from "./Components/things/ExpenseForm";
+import { ExpenseList } from "./Components/things/ExpenseList";
 import { v4 } from "uuid";
+//Firebase
+import Home from "./Components/fireBaseThings/Home";
+import Login from "./Components/fireBaseThings/Login";
+import SignUp from "./Components/fireBaseThings/SignUp";
+import UserAuthContext from "./Components/Context/UserAuthContext";
 /*const initialExpenses = [
   { id: v4(), charge: "rent", amount: 450 },
   { id: v4(), charge: "transport", amount: 90 },
@@ -24,7 +29,8 @@ function App() {
   const [amount, setAmount] = useState("");
   //------------------------Alert useState--------------
   const [alert, setAlert] = useState({ show: false });
-  //--------------------edit
+  //--------------------edit and delete
+  const [del, setDel] = useState(true);
   const [edit, setEdit] = useState(false);
   //--------------------edit item id
   const [id, setId] = useState(0);
@@ -61,6 +67,7 @@ function App() {
         });
         setExpenses(tempExpenses);
         setEdit(false);
+        setDel(true);
       } else {
         const singleExpense = { id: v4(), charge, amount };
         setExpenses([...expenses, singleExpense]);
@@ -81,13 +88,15 @@ function App() {
   //handle delete  a expense item (delete button)
   const handleDelete = (id) => {
     console.log(`delete - ${id}`);
-    let tempExpenses = expenses.filter((item) => item.id !== id);
-    let removedItem = expenses.find((item) => item.id === id);
-    handleAlert({
-      type: "danger",
-      text: `you have removed ${removedItem.charge}`,
-    });
-    setExpenses(tempExpenses);
+    if (del) {
+      let tempExpenses = expenses.filter((item) => item.id !== id);
+      let removedItem = expenses.find((item) => item.id === id);
+      handleAlert({
+        type: "danger",
+        text: `you have removed ${removedItem.charge}`,
+      });
+      setExpenses(tempExpenses);
+    }
   };
   //handle edit  a expense item (edit button)
   const handleEdit = (id) => {
@@ -96,6 +105,7 @@ function App() {
     setCharge(charge);
     setAmount(amount);
     setEdit(true);
+    setDel(false);
     setId(id);
     console.log(expense);
   };
