@@ -1,20 +1,3 @@
-/**
- * @license
- * Copyright 2022 Google LLC
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { useState, useEffect } from "react";
 import {
   Avatar,
@@ -105,19 +88,37 @@ export default function ExpenseDialog(props) {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const bucket = await uploadImage(formFields.file, authUser.uid);
-      await addReceipt(
-        authUser.uid,
-        formFields.date,
-        formFields.locationName,
-        formFields.address,
-        formFields.items,
-        formFields.amount,
-        bucket
-      );
-      props.onSuccess(RECEIPTS_ENUM.add);
+      if (isEdit) {
+        if (formFields.fileName) {
+          await replaceImage(formFields.file, formFields.imageBucket);
+        }
+        await updateReceipt(
+          formFields.id,
+          formFields.uid,
+          formFields.date,
+          formFields.locationName,
+          formFields.address,
+          formFields.items,
+          formFields.amount,
+          formFields.imageBucket
+        );
+      } else {
+        const bucket = await uploadImage(formFields.file, authUser.uid);
+        await addReceipt(
+          authUser.uid,
+          formFields.date,
+          formFields.locationName,
+          formFields.address,
+          formFields.items,
+          formFields.amount,
+          bucket
+        );
+      }
+
+      props.onSuccess(isEdit ? RECEIPTS_ENUM.edit : RECEIPTS_ENUM.add);
     } catch (error) {
-      props.onError(RECEIPTS_ENUM.add);
+      props.onError(isEdit ? RECEIPTS_ENUM.edit : RECEIPTS_ENUM.add);
+      console.log(error);
     }
     closeDialog();
   };
