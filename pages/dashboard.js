@@ -77,7 +77,11 @@ export default function Dashboard() {
   };
 
   // Listen to changes for loading and authUser, redirect if needed
-  useEffect(() => {}, [authUser, isLoading]);
+  useEffect(() => {
+    if (!isLoading && !authUser) {
+      router.push("/");
+    }
+  }, [authUser, isLoading]);
 
   // For all of the onClick functions, update the action and fields for updating
 
@@ -102,7 +106,12 @@ export default function Dashboard() {
     setDeleteReceiptId("");
   };
 
-  return (
+  return !authUser ? (
+    <CircularProgress
+      color="inherit"
+      sx={{ marginLeft: "50%", marginTop: "25%" }}
+    />
+  ) : (
     <div>
       <Head>
         <title>Expense Tracker</title>
