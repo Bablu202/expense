@@ -60,13 +60,32 @@ export default function Dashboard() {
   const [isLoadingReceipts, setIsLoadingReceipts] = useState(true);
   const [deleteReceiptId, setDeleteReceiptId] = useState("");
   const [deleteReceiptImageBucket, setDeleteReceiptImageBucket] = useState("");
-  const [receipt, setReceipt] = useState([]);
+  const [receipts, setReceipts] = useState([]);
   const [updateReceipt, setUpdateReceipt] = useState({});
 
   // State involved in snackbar
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [showSuccessSnackbar, setSuccessSnackbar] = useState(false);
   const [showErrorSnackbar, setErrorSnackbar] = useState(false);
+
+  // Listen for changes to loading and authUser, redirect if needed
+  useEffect(() => {
+    if (!isLoading && !authUser) {
+      router.push("/");
+    }
+  }, [authUser, isLoading]);
+
+  // Get receipts once user is logged in
+  useEffect(async () => {
+    if (authUser) {
+      const unsubscribe = await getReceipts(
+        authUser.uid,
+        setReceipts,
+        setIsLoadingReceipts
+      );
+      return () => unsubscribe();
+    }
+  }, [authUser]);
 
   // Sets appropriate snackbar message on whether @isSuccess and updates shown receipts if necessary
   const onResult = async (receiptEnum, isSuccess) => {
@@ -76,25 +95,6 @@ export default function Dashboard() {
     isSuccess ? setSuccessSnackbar(true) : setErrorSnackbar(true);
     setAction(RECEIPTS_ENUM.none);
   };
-
-  // Listen to changes for loading and authUser, redirect if needed
-  useEffect(() => {
-    if (!isLoading && !authUser) {
-      router.push("/");
-    }
-  }, [authUser, isLoading]);
-
-  //get receipts once user is logged in
-  useEffect(async () => {
-    if (authUser) {
-      const unsubscribe = await getReceipts(
-        authUser.uid,
-        setReceipt,
-        setIsLoadingReceipts
-      );
-      return () => unsubscribe();
-    }
-  }, [authUser]);
 
   // For all of the onClick functions, update the action and fields for updating
 
@@ -119,7 +119,20 @@ export default function Dashboard() {
     setDeleteReceiptId("");
   };
 
-  return !authUser ? (
+  // Delete receipt image from Storage
+  const onDelete = async () => {
+    let isSucceed = true;
+    try {
+      await deleteReceipt(deleteReceiptId);
+      await deleteImage(deleteReceiptImageBucket);
+    } catch (error) {
+      isSucceed = false;
+    }
+    resetDelete();
+    onResult(RECEIPTS_ENUM.delete, isSucceed);
+  };
+
+  return !authUser || isLoadingReceipts ? (
     <CircularProgress
       color="inherit"
       sx={{ marginLeft: "50%", marginTop: "25%" }}
@@ -168,7 +181,7 @@ export default function Dashboard() {
             <AddIcon />
           </IconButton>
         </Stack>
-        {receipt.map((receipt) => (
+        {receipts.map((receipt) => (
           <div key={receipt.id}>
             <Divider light />
             <ReceiptRow
@@ -201,7 +214,12 @@ export default function Dashboard() {
           <Button color="secondary" variant="outlined" onClick={resetDelete}>
             Cancel
           </Button>
-          <Button color="secondary" variant="contained" autoFocus>
+          <Button
+            color="secondary"
+            variant="contained"
+            onClick={onDelete}
+            autoFocus
+          >
             Delete
           </Button>
         </DialogActions>
